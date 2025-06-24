@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
 trigger:
-  - main  # or your branch name
+  - main
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -15,7 +15,7 @@ stages:
     jobs:
       - job: CheckoutJob
         steps:
-          - checkout: https://github.com/DigitalXC-Sales/mahendra-java-project.git
+          - checkout: self  # Use 'self' for same repo or configure a GitHub service connection
 
   - stage: Compile
     displayName: 'Compile Code'
@@ -69,3 +69,4 @@ stages:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
               ArtifactName: 'java-app'
               publishLocation: 'Container'
+
