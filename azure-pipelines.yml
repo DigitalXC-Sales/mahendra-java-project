@@ -1,51 +1,23 @@
 trigger:
   - main
 
+resources:
+  repositories:
+    - repository: mygithubrepo
+      type: github
+      name: DigitalXC-Sales/mahendra-java-project
+      endpoint: DigitalXC-Sales 
+
 pool:
   vmImage: 'ubuntu-latest'
 
 stages:
-  - stage: Checkout
-    displayName: 'Checkout Source Code'
+  - stage: Build
     jobs:
-      - job: CheckoutJob
+      - job: BuildJob
         steps:
-          - checkout: git:https://github.com/DigitalXC-Sales/mahendra-java-project.git
+          - checkout: mygithubrepo
 
-  - stage: Compile
-    displayName: 'Compile Code'
-    jobs:
-      - job: CompileJob
-        steps:
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'pom.xml'
-              goals: 'compile'
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.11'
-              mavenVersionOption: 'Default'
-              publishJUnitResults: false
-
-  - stage: Test
-    displayName: 'Run Unit Tests'
-    jobs:
-      - job: TestJob
-        steps:
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'pom.xml'
-              goals: 'test'
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.11'
-              mavenVersionOption: 'Default'
-              publishJUnitResults: true
-              testResultsFiles: '**/surefire-reports/TEST-*.xml'
-
-  - stage: Package
-    displayName: 'Package Artifact'
-    jobs:
-      - job: PackageJob
-        steps:
           - task: Maven@4
             inputs:
               mavenPomFile: 'pom.xml'
@@ -55,9 +27,9 @@ stages:
               mavenVersionOption: 'Default'
 
           - script: |
-              echo "Checking target folder contents:"
+              echo "Listing target folder contents:"
               ls -lR $(System.DefaultWorkingDirectory)/target
-            displayName: 'List target directory'
+            displayName: 'List Target Directory'
 
           - task: CopyFiles@2
             inputs:
