@@ -54,6 +54,11 @@ stages:
               jdkVersionOption: '1.11'
               mavenVersionOption: 'Default'
 
+          - script: |
+              echo "Checking target folder contents:"
+              ls -lR $(System.DefaultWorkingDirectory)/target
+            displayName: 'List target directory'
+
           - task: CopyFiles@2
             inputs:
               contents: '**/target/*.jar'
