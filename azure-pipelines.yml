@@ -20,7 +20,7 @@ stages:
           - checkout: mygithubrepo
 
   - stage: Compile
-    displayName: 'Compile Code'
+    displayName: 'MVN Compile Code'
     jobs:
       - job: CompileJob
         steps:
@@ -33,7 +33,7 @@ stages:
               mavenVersionOption: 'Default'
 
   - stage: Test
-    displayName: 'Run Unit Tests'
+    displayName: 'MVN Tests'
     jobs:
       - job: TestJob
         steps:
@@ -66,14 +66,24 @@ stages:
       - job: ArtifactJob
         steps:
           - script: |
-              echo "Checking target folder contents:"
+              echo "Checking target folder contents..."
               ls -lR $(System.DefaultWorkingDirectory)/target || echo "No target directory found."
             displayName: 'List Target Directory (Safe)'
 
           - task: CopyFiles@2
             inputs:
-              contents: '**/target/*.war'
+              contents: '**/target/*.*'               
               targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+          - script: |
+              echo "Checking if files exist in artifact staging directory..."
+              if [ "$(ls -A $(Build.ArtifactStagingDirectory))" ]; then
+                echo "Files found for publishing."
+              else
+                echo "No files found to publish. Skipping publish step."
+                exit 0
+              fi
+            displayName: 'Pre-Publish File Check'
 
           - task: PublishBuildArtifacts@1
             inputs:
