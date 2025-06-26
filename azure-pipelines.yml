@@ -5,20 +5,53 @@ resources:
   repositories:
     - repository: mygithubrepo
       type: github
-      name: DigitalXC-Sales/mahendra-java-project   
-      endpoint: DigitalXC-Sales                
+      name: DigitalXC-Sales/mahendra-java-project
+      endpoint: DigitalXC-Sales
 
 pool:
   vmImage: 'ubuntu-latest'
 
 stages:
-  - stage: Build
-    displayName: 'Build Java Web App'
+  - stage: Checkout
+    displayName: 'Checkout Source Code'
     jobs:
-      - job: BuildJob
+      - job: CheckoutJob
         steps:
           - checkout: mygithubrepo
 
+  - stage: Compile
+    displayName: 'MVN Compile Code'
+    jobs:
+      - job: CompileJob
+        steps:
+          - task: Maven@4
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'compile'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              mavenVersionOption: 'Default'
+
+  - stage: Test
+    displayName: 'MVN test'
+    jobs:
+      - job: TestJob
+        steps:
+          - task: Maven@4
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'test'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              mavenVersionOption: 'Default'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+
+  - stage: Package
+    displayName: 'Package WAR Artifact'
+    jobs:
+      - job: PackageJob
+        steps:
           - task: Maven@4
             inputs:
               mavenPomFile: 'pom.xml'
@@ -27,14 +60,19 @@ stages:
               jdkVersionOption: '1.11'
               mavenVersionOption: 'Default'
 
+  - stage: ArtifactPreparation
+    displayName: 'Prepare and Publish Artifact'
+    jobs:
+      - job: ArtifactJob
+        steps:
           - script: |
-              echo "Checking target folder contents:"
+              echo "Listing target directory contents:"
               ls -lR $(System.DefaultWorkingDirectory)/target
             displayName: 'List Target Directory'
 
           - task: CopyFiles@2
             inputs:
-              contents: '**/target/*.war'                 # ✅ Important: WAR file for web app
+              contents: '**/target/*.war'
               targetFolder: '$(Build.ArtifactStagingDirectory)'
 
           - task: PublishBuildArtifacts@1
