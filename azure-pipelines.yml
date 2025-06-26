@@ -1,18 +1,19 @@
 trigger:
-  - main
+  - master
 
 resources:
   repositories:
     - repository: mygithubrepo
       type: github
-      name: DigitalXC-Sales/mahendra-java-project
-      endpoint: DigitalXC-Sales 
+      name: DigitalXC-Sales/mahendra-java-project   
+      endpoint: DigitalXC-Sales                
 
 pool:
   vmImage: 'ubuntu-latest'
 
 stages:
   - stage: Build
+    displayName: 'Build Java Web App'
     jobs:
       - job: BuildJob
         steps:
@@ -27,13 +28,13 @@ stages:
               mavenVersionOption: 'Default'
 
           - script: |
-              echo "Listing target folder contents:"
+              echo "Checking target folder contents:"
               ls -lR $(System.DefaultWorkingDirectory)/target
             displayName: 'List Target Directory'
 
           - task: CopyFiles@2
             inputs:
-              contents: '**/target/*.jar'
+              contents: '**/target/*.war'                 # ✅ Important: WAR file for web app
               targetFolder: '$(Build.ArtifactStagingDirectory)'
 
           - task: PublishBuildArtifacts@1
