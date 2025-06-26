@@ -10,7 +10,7 @@ stages:
     jobs:
       - job: CheckoutJob
         steps:
-          - checkout: self
+          - checkout: git:https://github.com/DigitalXC-Sales/mahendra-java-project.git
 
   - stage: Compile
     displayName: 'Compile Code'
