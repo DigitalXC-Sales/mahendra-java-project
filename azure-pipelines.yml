@@ -20,7 +20,7 @@ stages:
           - checkout: mygithubrepo
 
   - stage: Compile
-    displayName: 'MVN Compile Code'
+    displayName: 'Compile Code'
     jobs:
       - job: CompileJob
         steps:
@@ -33,7 +33,7 @@ stages:
               mavenVersionOption: 'Default'
 
   - stage: Test
-    displayName: 'MVN test'
+    displayName: 'Run Unit Tests'
     jobs:
       - job: TestJob
         steps:
@@ -66,9 +66,9 @@ stages:
       - job: ArtifactJob
         steps:
           - script: |
-              echo "Listing target directory contents:"
-              ls -lR $(System.DefaultWorkingDirectory)/target
-            displayName: 'List Target Directory'
+              echo "Checking target folder contents:"
+              ls -lR $(System.DefaultWorkingDirectory)/target || echo "No target directory found."
+            displayName: 'List Target Directory (Safe)'
 
           - task: CopyFiles@2
             inputs:
