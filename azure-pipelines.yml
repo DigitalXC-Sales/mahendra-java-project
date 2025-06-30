@@ -61,9 +61,9 @@ stages:
               mavenVersionOption: 'Default'
 
           - script: |
-              echo "Listing target directory after packaging..."
-              ls -lR $(System.DefaultWorkingDirectory)
-            displayName: 'Post-Package Directory Tree'
+              echo "Checking if WAR was generated..."
+              find $(System.DefaultWorkingDirectory) -name "*.war" || echo "No WAR file found!"
+            displayName: 'Check for WAR File After Package'
 
   - stage: ArtifactPreparation
     displayName: 'Prepare and Publish Artifact'
@@ -71,21 +71,21 @@ stages:
       - job: ArtifactJob
         steps:
           - script: |
-              echo "Checking for build output (target directory)..."
-              ls -lR $(System.DefaultWorkingDirectory)
-            displayName: 'Check Full Workspace Tree'
+              echo "Listing all files after package..."
+              find $(System.DefaultWorkingDirectory) -type f
+            displayName: 'List All Files in Workspace'
 
           - task: CopyFiles@2
             inputs:
               sourceFolder: '$(System.DefaultWorkingDirectory)'
               contents: '**/target/**/*.war'
               targetFolder: '$(Build.ArtifactStagingDirectory)'
-            displayName: 'Copy WAR files to Artifact Staging Directory'
+            displayName: 'Copy WAR File to Artifact Staging Directory'
 
           - script: |
-              echo "Final Check: Files in Artifact Staging Directory:"
-              ls -lR $(Build.ArtifactStagingDirectory)
-            displayName: 'List Files Before Publish'
+              echo "Files in Artifact Staging Directory:"
+              find $(Build.ArtifactStagingDirectory) -type f || echo "No files to publish."
+            displayName: 'List Files Before Artifact Publish'
 
           - task: PublishBuildArtifacts@1
             inputs:
