@@ -60,30 +60,32 @@ stages:
               jdkVersionOption: '1.11'
               mavenVersionOption: 'Default'
 
+          - script: |
+              echo "Listing target directory after packaging..."
+              ls -lR $(System.DefaultWorkingDirectory)
+            displayName: 'Post-Package Directory Tree'
+
   - stage: ArtifactPreparation
     displayName: 'Prepare and Publish Artifact'
     jobs:
       - job: ArtifactJob
         steps:
           - script: |
-              echo "Checking target folder contents..."
-              ls -lR $(System.DefaultWorkingDirectory)/target || echo "No target directory found."
-            displayName: 'List Target Directory (Safe)'
+              echo "Checking for build output (target directory)..."
+              ls -lR $(System.DefaultWorkingDirectory)
+            displayName: 'Check Full Workspace Tree'
 
           - task: CopyFiles@2
             inputs:
-              contents: '**/target/*.*'               
+              sourceFolder: '$(System.DefaultWorkingDirectory)'
+              contents: '**/target/**/*.war'
               targetFolder: '$(Build.ArtifactStagingDirectory)'
+            displayName: 'Copy WAR files to Artifact Staging Directory'
 
           - script: |
-              echo "Checking if files exist in artifact staging directory..."
-              if [ "$(ls -A $(Build.ArtifactStagingDirectory))" ]; then
-                echo "Files found for publishing."
-              else
-                echo "No files found to publish. Skipping publish step."
-                exit 0
-              fi
-            displayName: 'Pre-Publish File Check'
+              echo "Final Check: Files in Artifact Staging Directory:"
+              ls -lR $(Build.ArtifactStagingDirectory)
+            displayName: 'List Files Before Publish'
 
           - task: PublishBuildArtifacts@1
             inputs:
