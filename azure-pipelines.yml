@@ -61,9 +61,9 @@ stages:
               mavenVersionOption: 'Default'
 
           - script: |
-              echo "Checking if WAR was generated..."
+              echo "Checking for WAR file after packaging..."
               find $(System.DefaultWorkingDirectory) -name "*.war" || echo "No WAR file found!"
-            displayName: 'Check for WAR File After Package'
+            displayName: 'List WAR File After Package'
 
   - stage: ArtifactPreparation
     displayName: 'Prepare and Publish Artifact'
@@ -71,7 +71,7 @@ stages:
       - job: ArtifactJob
         steps:
           - script: |
-              echo "Listing all files after package..."
+              echo "Listing all files after package build..."
               find $(System.DefaultWorkingDirectory) -type f
             displayName: 'List All Files in Workspace'
 
