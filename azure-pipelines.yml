@@ -64,31 +64,3 @@ stages:
               echo "Checking for WAR file after packaging..."
               find $(System.DefaultWorkingDirectory) -name "*.war" || echo "No WAR file found!"
             displayName: 'List WAR File After Package'
-
-  - stage: ArtifactPreparation
-    displayName: 'Prepare and Publish Artifact'
-    jobs:
-      - job: ArtifactJob
-        steps:
-          - script: |
-              echo "Listing all files after package build..."
-              find $(System.DefaultWorkingDirectory) -type f
-            displayName: 'List All Files in Workspace'
-
-          - task: CopyFiles@2
-            inputs:
-              sourceFolder: '$(System.DefaultWorkingDirectory)'
-              contents: '**/target/**/*.war'
-              targetFolder: '$(Build.ArtifactStagingDirectory)'
-            displayName: 'Copy WAR File to Artifact Staging Directory'
-
-          - script: |
-              echo "Files in Artifact Staging Directory:"
-              find $(Build.ArtifactStagingDirectory) -type f || echo "No files to publish."
-            displayName: 'List Files Before Artifact Publish'
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathToPublish: '$(Build.ArtifactStagingDirectory)'
-              artifactName: 'java-app'
-              publishLocation: 'Container'
