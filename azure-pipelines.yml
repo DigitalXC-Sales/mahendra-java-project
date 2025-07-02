@@ -46,3 +46,26 @@ stages:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: 'java-app'
         publishLocation: 'Container'
+
+- stage: Deploy
+  displayName: 'Deploy WAR to Tomcat'
+  dependsOn: Build
+  jobs:
+  - job: DeployJob
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'java-app'
+        downloadPath: '$(System.DefaultWorkingDirectory)'
+
+    - task: CmdLine@2
+      displayName: 'Deploy WAR to Tomcat'
+      inputs:
+        script: |
+          echo "Deploying WAR to Tomcat Server..."
+          WAR_FILE=$(find $(System.DefaultWorkingDirectory) -name "*.war")
+          echo "WAR File Found: $WAR_FILE"
+
+          curl -v -u "mahendra:Mahendra" --upload-file "$WAR_FILE" "http://localhost:8080/manager/text/deploy?path=/myapp&update=true"
