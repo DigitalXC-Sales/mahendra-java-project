@@ -11,7 +11,7 @@ resources:
     endpoint: DigitalXC-Sales
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: MyWindowsSelfHostedPool  # ✅ Your new self-hosted agent pool name
 
 stages:
 - stage: Build
@@ -34,11 +34,11 @@ stages:
       inputs:
         script: |
           echo "Checking target folder contents:"
-          ls -lR $(System.DefaultWorkingDirectory)/target
+          dir $(System.DefaultWorkingDirectory)\target
 
     - task: CopyFiles@2
       inputs:
-        contents: '**/target/*.war'
+        contents: '**\target\*.war'
         targetFolder: '$(Build.ArtifactStagingDirectory)'
 
     - task: PublishBuildArtifacts@1
@@ -65,7 +65,7 @@ stages:
       inputs:
         script: |
           echo "Deploying WAR to Tomcat Server..."
-          WAR_FILE=$(find $(System.DefaultWorkingDirectory) -name "*.war")
-          echo "WAR File Found: $WAR_FILE"
+          for /r %%i in (*.war) do set WAR_FILE=%%i
+          echo WAR File Found: %WAR_FILE%
 
-          curl -v -u "mahendra:Mahendra" --upload-file "$WAR_FILE" "http://localhost:8080/manager/text/deploy?path=/myapp&update=true"
+          curl -v -u "mahendra:Mahendra" --upload-file "%WAR_FILE%" "http://localhost:8080/manager/text/deploy?path=/myapp&update=true"
