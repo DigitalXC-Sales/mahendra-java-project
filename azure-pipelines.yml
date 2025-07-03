@@ -57,15 +57,17 @@ stages:
 
         - task: CopyFilesOverSSH@0
           inputs:
-            sshEndpoint: 'AzureVM-SSH-Connection'    # ✅ Replace with your actual connection name
+            sshEndpoint: 'AzureVM-SSH-Connection'   # 🔗 Replace with your real SSH Service Connection name
             sourceFolder: '$(System.DefaultWorkingDirectory)/java-app'
             contents: '**/*.war'
-            targetFolder: '/opt/tomcat/webapps/'
+            targetFolder: '/home/azureuser/deployments'
 
         - task: SSH@0
           inputs:
-            sshEndpoint: 'AzureVM-SSH-Connection'    # ✅ Same connection name
+            sshEndpoint: 'AzureVM-SSH-Connection'
             runOptions: 'commands'
             commands: |
               sudo /opt/tomcat/bin/shutdown.sh || true
+              sudo rm -f /opt/tomcat/webapps/*.war
+              sudo cp /home/azureuser/deployments/*.war /opt/tomcat/webapps/
               sudo /opt/tomcat/bin/startup.sh
