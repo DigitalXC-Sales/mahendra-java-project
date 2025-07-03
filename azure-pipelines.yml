@@ -1,48 +1,71 @@
 trigger:
   branches:
     include:
-    - master
+      - master
 
 resources:
   repositories:
-  - repository: mygithubrepo
-    type: github
-    name: DigitalXC-Sales/mahendra-java-project
-    endpoint: DigitalXC-Sales
+    - repository: mygithubrepo
+      type: github
+      name: DigitalXC-Sales/mahendra-java-project
+      endpoint: DigitalXC-Sales
 
 pool:
   vmImage: 'ubuntu-latest'
 
 stages:
+# =================== Build Stage ===================
 - stage: Build
   displayName: 'Build Java Web App'
   jobs:
-  - job: BuildJob
-    steps:
-    - checkout: mygithubrepo
+    - job: BuildJob
+      steps:
+        - checkout: mygithubrepo
 
-    - task: Maven@4
-      inputs:
-        mavenPomFile: 'pom.xml'
-        goals: 'clean package'
-        javaHomeOption: 'JDKVersion'
-        jdkVersionOption: '1.11'
-        mavenVersionOption: 'Default'
+        - task: Maven@4
+          inputs:
+            mavenPomFile: 'pom.xml'
+            goals: 'clean package'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '1.11'
+            mavenVersionOption: 'Default'
 
-    - task: CmdLine@2
-      displayName: 'List Target Directory'
-      inputs:
-        script: |
-          echo "Checking target folder contents:"
-          ls -lR $(System.DefaultWorkingDirectory)/target
+        - task: CopyFiles@2
+          inputs:
+            contents: '**/target/*.war'
+            targetFolder: '$(Build.ArtifactStagingDirectory)'
 
-    - task: CopyFiles@2
-      inputs:
-        contents: '**/target/*.war'
-        targetFolder: '$(Build.ArtifactStagingDirectory)'
+        - task: PublishBuildArtifacts@1
+          inputs:
+            pathToPublish: '$(Build.ArtifactStagingDirectory)'
+            artifactName: 'java-app'
+            publishLocation: 'Container'
 
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)'
-        artifactName: 'java-app'
-        publishLocation: 'Container'
+# =================== Deploy Stage ===================
+- stage: Deploy
+  displayName: 'Deploy WAR to Azure VM'
+  dependsOn: Build
+  jobs:
+    - job: DeployJob
+      steps:
+        - task: DownloadBuildArtifacts@0
+          inputs:
+            buildType: 'current'
+            downloadType: 'single'
+            artifactName: 'java-app'
+            downloadPath: '$(System.DefaultWorkingDirectory)'
+
+        - task: CopyFilesOverSSH@0
+          inputs:
+            sshEndpoint: 'AzureVM-SSH-Connection'    # ✅ Replace with your actual connection name
+            sourceFolder: '$(System.DefaultWorkingDirectory)/java-app'
+            contents: '**/*.war'
+            targetFolder: '/opt/tomcat/webapps/'
+
+        - task: SSH@0
+          inputs:
+            sshEndpoint: 'AzureVM-SSH-Connection'    # ✅ Same connection name
+            runOptions: 'commands'
+            commands: |
+              sudo /opt/tomcat/bin/shutdown.sh || true
+              sudo /opt/tomcat/bin/startup.sh
