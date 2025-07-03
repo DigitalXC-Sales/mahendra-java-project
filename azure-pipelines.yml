@@ -57,14 +57,14 @@ stages:
 
         - task: CopyFilesOverSSH@0
           inputs:
-            sshEndpoint: 'AzureVM-SSH-Connection'   # 🔗 Replace with your real SSH Service Connection name
+            sshEndpoint: 'AzureVM-SSH-Connection'   # 🔗 Replace with your real SSH service connection name
             sourceFolder: '$(System.DefaultWorkingDirectory)/java-app'
             contents: '**/*.war'
             targetFolder: '/home/azureuser/deployments'
 
         - task: SSH@0
           inputs:
-            sshEndpoint: 'AzureVM-SSH-Connection'
+            sshEndpoint: 'AzureVM-SSH-Connection'   # 🔗 Same as above
             runOptions: 'commands'
             commands: |
               sudo /opt/tomcat/bin/shutdown.sh || true
