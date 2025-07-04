@@ -55,19 +55,31 @@ stages:
             artifactName: 'java-app'
             downloadPath: '$(System.DefaultWorkingDirectory)'
 
+        # 🔍 Debug: List downloaded artifact contents
+        - task: CmdLine@2
+          displayName: 'Check downloaded artifact files'
+          inputs:
+            script: |
+              echo "Listing files in: $(System.DefaultWorkingDirectory)/java-app"
+              ls -l $(System.DefaultWorkingDirectory)/java-app
+              echo "Listing files in: $(System.DefaultWorkingDirectory)/java-app/target"
+              ls -l $(System.DefaultWorkingDirectory)/java-app/target || true
+
+        # ✅ Fixed CopyFiles with correct path
         - task: CopyFilesOverSSH@0
           inputs:
-            sshEndpoint: 'AzureVM-SSH-Connection'   # 🔗 Replace with your real SSH service connection
-            sourceFolder: '$(System.DefaultWorkingDirectory)/java-app'
-            contents: '**/*.war'
+            sshEndpoint: 'AzureVM-SSH-Connection'
+            sourceFolder: '$(System.DefaultWorkingDirectory)/java-app/target'
+            contents: '*.war'
             targetFolder: '/home/azureuser/deployments'
 
+        # ✅ Safe SSH Tomcat Restart & Deploy
         - task: SSH@0
           inputs:
-            sshEndpoint: 'AzureVM-SSH-Connection'   # 🔗 Same connection
+            sshEndpoint: 'AzureVM-SSH-Connection'
             runOptions: 'commands'
             commands: |
               sudo pkill -f 'org.apache.catalina.startup.Bootstrap' || true
-              sudo rm -f /opt/tomcat/webapps/*.war
+              sudo rm -f /opt/tomcat/webapps/*.war || true
               sudo cp /home/azureuser/deployments/*.war /opt/tomcat/webapps/
               sudo /opt/tomcat/bin/startup.sh
