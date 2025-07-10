@@ -14,13 +14,14 @@ pool:
   vmImage: 'ubuntu-latest'
 
 stages:
-# =================== Build Stage ===================
 - stage: Build
   displayName: 'Build Java Web App'
   jobs:
     - job: BuildJob
       steps:
-        - checkout: mygithubrepo
+        - task: 6d15af64-176c-496d-b583-fd2ae21d4df4@1
+          inputs:
+            repository: mygithubrepo
 
         - task: Maven@4
           inputs:
@@ -41,10 +42,10 @@ stages:
             artifactName: 'java-app'
             publishLocation: 'Container'
 
-# =================== Deploy Stage ===================
 - stage: Deploy
   displayName: 'Deploy WAR to Azure VM'
-  dependsOn: Build
+  dependsOn:
+    - Build
   jobs:
     - job: DeployJob
       steps:
@@ -55,7 +56,6 @@ stages:
             artifactName: 'java-app'
             downloadPath: '$(System.DefaultWorkingDirectory)'
 
-        # 🔍 Debug: List downloaded artifact contents
         - task: CmdLine@2
           displayName: 'Check downloaded artifact files'
           inputs:
@@ -65,21 +65,19 @@ stages:
               echo "Listing files in: $(System.DefaultWorkingDirectory)/java-app/target"
               ls -l $(System.DefaultWorkingDirectory)/java-app/target || true
 
-        # ✅ Fixed CopyFiles with correct path
         - task: CopyFilesOverSSH@0
           inputs:
-            sshEndpoint: 'AzureVM-SSH-Connection'
+            sshEndpoint: 'VM-SSH-Connection'   # ✅ Your new SSH service connection
             sourceFolder: '$(System.DefaultWorkingDirectory)/java-app/target'
             contents: '*.war'
-            targetFolder: '/home/azureuser/deployments'
+            targetFolder: '/home/azureuser/deployments'   # ✅ New target folder
 
-        # ✅ Safe SSH Tomcat Restart & Deploy
         - task: SSH@0
           inputs:
-            sshEndpoint: 'AzureVM-SSH-Connection'
+            sshEndpoint: 'VM-SSH-Connection'   # ✅ Your new SSH service connection
             runOptions: 'commands'
             commands: |
               sudo pkill -f 'org.apache.catalina.startup.Bootstrap' || true
-              sudo rm -f /opt/tomcat/webapps/*.war || true
-              sudo cp /home/azureuser/deployments/*.war /opt/tomcat/webapps/
-              sudo /opt/tomcat/bin/startup.sh
+              sudo rm -f /home/azureuser/apache-tomcat-9.0.82/webapps/*.war || true
+              sudo cp /home/azureuser/deployments/*.war /home/azureuser/apache-tomcat-9.0.82/webapps/
+              sudo /home/azureuser/apache-tomcat-9.0.82/bin/startup.sh
